@@ -573,14 +573,22 @@ static int fb_notifier_callback(struct notifier_block *self, unsigned long event
 	if (event != FB_EARLY_EVENT_BLANK)
 		return 0;
 
-	if (*blank == FB_BLANK_UNBLANK) {
-		fpc1020->screen_state = 1;
-		queue_work(system_highpri_wq, &fpc1020->pm_work);
-	} else if (*blank == FB_BLANK_POWERDOWN) {
-		fpc1020->screen_state = 0;
-		queue_work(system_highpri_wq, &fpc1020->pm_work);
+	if(FB_EARLY_EVENT_BLANK != event && FB_EVENT_BLANK != event)
+	return 0;
+	if((evdata) && (evdata->data) && (fpc1020)) {
+		blank = evdata->data;
+		if( *blank == FB_BLANK_UNBLANK && (event == FB_EARLY_EVENT_BLANK )) {
+			dev_err(fpc1020->dev, "%s screen on\n", __func__);
+			fpc1020->screen_state = 1;
+			sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_screen_state.attr.name);
+			set_fingerprintd_nice(0);
+		} else if( *blank == FB_BLANK_POWERDOWN && (event == FB_EARLY_EVENT_BLANK/*FB_EVENT_BLANK*/ )) {
+            dev_err(fpc1020->dev, "%s screen off\n", __func__);
+		    fpc1020->screen_state = 0;
+			sysfs_notify(&fpc1020->dev->kobj, NULL, dev_attr_screen_state.attr.name);
+			set_fingerprintd_nice(-1);
+		}
 	}
-
 	return 0;
 }
 #endif
