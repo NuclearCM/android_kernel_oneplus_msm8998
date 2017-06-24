@@ -1790,6 +1790,12 @@ static ssize_t qpnp_hap_vmax_store(struct device *dev,
 
 /* sysfs attributes */
 static struct device_attribute qpnp_hap_attrs[] = {
+	__ATTR(rf_hz, (S_IRUGO | S_IWUSR | S_IWGRP),
+			qpnp_hap_rf_hz_show,
+			qpnp_hap_rf_hz_store),
+	__ATTR(vmax_mv_strong, (S_IRUGO | S_IWUSR | S_IWGRP),
+			qpnp_hap_vmax_show,
+			qpnp_hap_vmax_store),
 	__ATTR(wf_s0, 0664, qpnp_hap_wf_s0_show, qpnp_hap_wf_s0_store),
 	__ATTR(wf_s1, 0664, qpnp_hap_wf_s1_show, qpnp_hap_wf_s1_store),
 	__ATTR(wf_s2, 0664, qpnp_hap_wf_s2_show, qpnp_hap_wf_s2_store),
@@ -2262,14 +2268,23 @@ static void qpnp_hap_td_enable(struct timed_output_dev *dev, int time_ms)
 			mutex_unlock(&hap->lock);
 			return;
 		}
-	}
+		hap->state = 0;
+	} else {
+		value = (value > hap->timeout_ms ?
+				 hap->timeout_ms : value);
 
-	time_ms = (time_ms > hap->timeout_ms ? hap->timeout_ms : time_ms);
-	hap->play_time_ms = time_ms;
-	hap->state = 1;
-	hrtimer_start(&hap->hap_timer,
-		ktime_set(time_ms / 1000, (time_ms % 1000) * 1000000),
-		HRTIMER_MODE_REL);
+		if (hap->vmax_mv == QPNP_HAP_VMAX_MIN_MV) {
+			mutex_unlock(&hap->lock);
+			return;
+		}
+
+		//if value < 11ms,use overdrive
+		qpnp_hap_wf_samp_store_all(dev, (value<11?1:0));
+		hap->state = 1;
+		hap->enable_time = value;
+	}
+	queue_work(vibqueue,&hap->work);
+	msleep(1);
 	mutex_unlock(&hap->lock);
 	schedule_work(&hap->work);
 }
