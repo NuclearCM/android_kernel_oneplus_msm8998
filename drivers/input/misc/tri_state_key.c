@@ -152,6 +152,7 @@ switch_dev_get_devtree_pdata(struct device *dev)
 }
 #endif
 
+	// Keycode top
 static int keyCode_top_show(struct seq_file *seq, void *offset)
 {
     seq_printf(seq, "%d\n", keyCode_slider_top);
@@ -196,6 +197,7 @@ const struct file_operations proc_keyCode_top =
 	.release	= single_release,
 };
 
+	// Keycode middle
 static int keyCode_middle_show(struct seq_file *seq, void *offset)
 {
     seq_printf(seq, "%d\n", keyCode_slider_middle);
@@ -240,6 +242,7 @@ const struct file_operations proc_keyCode_middle =
 	.release	= single_release,
 };
 
+	// Keycode bottom
 static int keyCode_bottom_show(struct seq_file *seq, void *offset)
 {
     seq_printf(seq, "%d\n", keyCode_slider_bottom);
@@ -363,7 +366,7 @@ static int tristate_dev_probe(struct platform_device *pdev)
         	}
 
 			error = request_irq(switch_data->irq_key1, switch_dev_interrupt,
-			    IRQF_TRIGGER_FALLING|IRQF_TRIGGER_RISING, "tristate_key1", switch_data);
+			    IRQF_TRIGGER_FALLING, "tristate_key1", switch_data);
 
         	if (error) {
         		dev_err(dev,
@@ -397,7 +400,7 @@ static int tristate_dev_probe(struct platform_device *pdev)
         	}
 
 			error = request_irq(switch_data->irq_key2, switch_dev_interrupt,
-			    IRQF_TRIGGER_FALLING|IRQF_TRIGGER_RISING, "tristate_key2", switch_data);
+			    IRQF_TRIGGER_FALLING, "tristate_key2", switch_data);
 
         	if (error) {
         		dev_err(dev,
@@ -432,9 +435,8 @@ static int tristate_dev_probe(struct platform_device *pdev)
         		goto err_set_gpio_input;
         	}
 
-
 			error = request_irq(switch_data->irq_key3, switch_dev_interrupt,
-			    IRQF_TRIGGER_FALLING|IRQF_TRIGGER_RISING, "tristate_key3", switch_data);
+			    IRQF_TRIGGER_FALLING, "tristate_key3", switch_data);
 
         	if (error) {
         		dev_err(dev,
@@ -446,7 +448,6 @@ static int tristate_dev_probe(struct platform_device *pdev)
             }
 
        }
-
 
 	INIT_WORK(&switch_data->work, switch_dev_work);
 
